@@ -1,4 +1,6 @@
 {
     "name": "vincmark/aretemo-backend",
-    "require": {}
+    "require": {
+        "twig/twig": "^2.11"
+    }
 }
