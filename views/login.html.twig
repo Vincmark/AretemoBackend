@@ -3,9 +3,15 @@
 {% block content %}
 <form action="login" method="post">
     <label for="user_name">User email</label>
-    <input type="text" name="email">
+    <input type="text" name="email" {{ isEmail ? '' :  'value='~pEmail~'' }}>
+    {% if not isEmail %}
+        <p> Email is wrong</p>
+    {% endif %}
     <label for="user_name">Password</label>
-    <input type="password" name="password">
+    <input type="password" name="password" {{ isPassword ? '' :  'value='~pPassword~'' }}>
+    {% if not isPassword %}
+        <p> Password is wrong</p>
+    {% endif %}
     <button type="submit">Login</button>
 </form>
 {% endblock %}

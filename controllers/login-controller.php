@@ -3,37 +3,16 @@
 use Respect\Validation\Validator as v;
 
 
-$dsn = 'mysql:dbname=' . $db['database'] . ';host=' . $db['host'] . ';charset=' . $db['charset'];
-$user = $db['user'];
-$password = $db['password'];
-
-try {
-    $dbh = new PDO($dsn, $user, $password);
-} catch (PDOException $e) {
-    echo 'Подключение не удалось: ' . $e->getMessage();
-}
-$result = $dbh->query('select * from users');
-$users = $result->fetchAll(PDO::FETCH_ASSOC);
-//var_dump($users);
-foreach ($users as $user) {
-    echo($user['name']);
-}
-
-$sql = 'SELECT EXISTS(SELECT * FROM users WHERE name=:name)';
-$stmt = $dbh->prepare($sql);
-$params = [':name' => 'Vova'];
-$stmt->execute($params);
-$users = $stmt->fetchColumn();
-
-$users = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-
-
-
 $formParams = [];
 $formItemErrors = [];
 $formError = false;
+$isUserVerified = true;
+$isEmail = false;
+$pEmail = '';
+$isPassword = false;
+$pPassword = '';
 
+echo '<pre>';
 
 $isPost = false;
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -42,7 +21,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 echo 'Auth=';
 var_dump($isAuth);
-echo ' Post=';
+echo 'Post=';
 var_dump($isPost);
 
 
@@ -93,94 +72,47 @@ if ((!$isAuth) && ($isPost)) {
 
     echo 'Email=';
     var_dump($isEmail);
-    echo ' Password=';
+    echo 'Password=';
     var_dump($isPassword);
 
     // check for user in DB
     if ($isEmail && $isPassword) {
+        $users = dbExecute($dbh, 'SELECT * FROM users WHERE email=:email', [':email' => $pEmail]);
+        if (count($users) === 0) {
+            $isUserVerified = false;
 
-        $dsn = 'mysql:dbname=' . $db['database'] . ';host=' . $db['host'] . ';charset=' . $db['charset'];
-        $user = $db['user'];
-        $password = $db['password'];
-
-        try {
-            $dbh = new PDO($dsn, $user, $password);
-        } catch (PDOException $e) {
-            echo 'Подключение не удалось: ' . $e->getMessage();
-        }
-        $result = $dbh->query('select * from users');
-        $users = $result->fetch(PDO::FETCH_ASSOC);
-        var_dump($users);
-        foreach ($users as $user) {
-            echo($user['']);
         }
 
-        echo 'DB OK';
+        // Checking for password
+        if ($isUserVerified) {
+            if (!password_verify($pPassword, $users[0]['password'])) {
+                $isUserVerified = false;
+            }
+        }
 
+        // User session creation
+        if ($isUserVerified) {
+            session_start();
+            $_SESSION['username'] = $users[0]['username'];
+            $_SESSION['user_id'] = $users[0]['user_id'];
+            echo 'redirect to dashboard';
+            //header("Location: /index.php");
+        }
     }
-
-
-//    $formParams['email'] = '';
-//    $isEmail = $valEmail = v::email()->validate('alexandre@gaigalas.net');
-//    if ($isEmail) {
-//        echo 'email is good';
-//
-//    } else {
-//        echo 'email is bad';
-//    }
-
-//    if (!isset($_POST['email'])) {
-//        $formItemErrors['email'] = true;
-//    }
-//    if (!isset($formItemErrors['email']) && (empty($_POST['email']))) {
-//        $formItemErrors['email'] = true;
-//    }
-//    if (!isset($formItemErrors['email']) && (strlen($_POST['email']) === 0)) {
-//        $formItemErrors['email'] = true;
-//    }
-//    if (!isset($formItemErrors['email'])) {
-//        $formParams['email'] = filter_var($_POST['email'], FILTER_VALIDATE_EMAIL);
-//        if ($formParams['email'] !== false) {
-//            $formParams['email'] = mysqli_real_escape_string($dbConnection, $_POST['email']);
-//        } else {
-//            $formParams['email'] = mysqli_real_escape_string($dbConnection, $_POST['email']);
-//            $formItemErrors['email'] = true;
-//        }
-//    }
-    //password
-
-
-    echo 'Case 2';
-    // if data valid
-    echo 'Case 3';
-
-    //session_start();
-//$_SESSION['username'] = 'Alexey';
-//$_SESSION['user_id'] = '15';
-//header("Location: /home-controller.php");
 }
 
-
-//if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-//    $loginSuccess = 0;
-//    if ($_POST['user_name'] === 'Alexey') {
-//        echo('Right name');
-//        $loginSuccess++;
-//    } else {
-//        echo('Bad name ' . $_POST['user_name']);
-//    }
-//    if ($_POST['password'] === '12345') {
-//        echo('Right password');
-//        $loginSuccess++;
-//    } else {
-//        echo('Bad password ' . $_POST['password']);
-//    }
-//    if ($loginSuccess === 2) {
-//        echo("Login!!!");
-//        header("Location: /dashboard");
-//
-//    }
-//}
+echo 'isUserVerified=';
+var_dump($isUserVerified);
+echo '</pre>';
 
 
-echo $twig->render('login.html.twig', ['pageTitle' => 'Login']);
+echo $twig->render('login.html.twig',
+    [
+        'pageTitle' => 'Login',
+        'isEmail' => $isEmail,
+        'pEmail' => $pEmail,
+        'isPassword' => $isPassword,
+        'pPassword' => $pPassword
+    ]);
+
+
