@@ -2,117 +2,115 @@
 
 use Respect\Validation\Validator as v;
 
+$formParams['email'] = '';
+$formParams['password'] = '';
 
-$formParams = [];
-$formItemErrors = [];
-$formError = false;
-$isUserVerified = true;
-$isEmail = false;
-$pEmail = '';
-$isPassword = false;
-$pPassword = '';
+$formErrors['emailInvalid'] = false;
+$formErrors['passwordInvalid'] = false;
+$formErrors['userAbsent'] = false;
+$formErrors['passwordWrong'] = false;
 
-echo '<pre>';
+define("FORM_STATE_AUTHORIZED", 0);
+define("FORM_STATE_CLEAR", 1);
+define("FORM_STATE_ERRORS", 2);
+define("FORM_STATE_SUCCESS", 3);
+
+$formState = -1;
 
 $isPost = false;
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $isPost = true;
 }
 
-echo 'Auth=';
-var_dump($isAuth);
-echo 'Post=';
-var_dump($isPost);
+//echo 'Auth=';
+//var_dump($isAuth);
+//echo 'Post=';
+//var_dump($isPost);
 
 
 // Checking for case
 // Case - 0. We are authorized - redirect to default controller
 // - authorized
 if ($isAuth) {
-    echo 'Case 0';
+    $formState = FORM_STATE_AUTHORIZED;
 }
 
 // Case - 1. We are loading clear login page - show clear login page
 // - not authorized
 // - no POST data
 if ((!$isAuth) && (!$isPost)) {
-    echo 'Case 1';
-}
+    $formState = FORM_STATE_CLEAR;
+} else {
+    if ((!$isAuth) && ($isPost)) {
 
-// Case 2 - not good login
-// Case 3 - good login
-if ((!$isAuth) && ($isPost)) {
-    // if data is not valid
-    //email
-    $isEmail = true;
-    if (isset($_POST['email'])) {
-        $pEmail = $_POST['email'];
-    } else {
-        $isEmail = false;
-    }
-
-    if ($isEmail) {
-        $pEmail = trim($pEmail);
-        $vEmail = v::email();
-        $isEmail = $vEmail->validate($pEmail);
-    }
-
-    // password
-    $isPassword = true;
-    if (isset($_POST['password'])) {
-        $pPassword = $_POST['password'];
-    } else {
-        $isPassword = false;
-    }
-
-    if ($isPassword) {
-        $vPassword = v::alnum()->noWhitespace()->length(3, 32);
-        $isPassword = $vPassword->validate($pPassword);
-    }
-
-    echo 'Email=';
-    var_dump($isEmail);
-    echo 'Password=';
-    var_dump($isPassword);
-
-    // check for user in DB
-    if ($isEmail && $isPassword) {
-        $users = dbExecute($dbh, 'SELECT * FROM users WHERE email=:email', [':email' => $pEmail]);
-        if (count($users) === 0) {
-            $isUserVerified = false;
-
+        //email
+        if (isset($_POST['email'])) {
+            $formParams['email'] = $_POST['email'];
+        } else {
+            $formErrors['emailInvalid'] = true;
         }
 
-        // Checking for password
-        if ($isUserVerified) {
-            if (!password_verify($pPassword, $users[0]['password'])) {
-                $isUserVerified = false;
+        if (!$formErrors['emailInvalid']) {
+            $formParams['email'] = trim($formParams['email']);
+            $vEmail = v::email();
+            if (!$vEmail->validate($formParams['email'])) {
+                echo 'Invalid Email';
+                $formErrors['emailInvalid'] = true;
             }
         }
 
-        // User session creation
-        if ($isUserVerified) {
-            session_start();
-            $_SESSION['username'] = $users[0]['username'];
-            $_SESSION['user_id'] = $users[0]['user_id'];
-            echo 'redirect to dashboard';
-            //header("Location: /index.php");
+        // password
+        if (isset($_POST['password'])) {
+            $formParams['password'] = $_POST['password'];
+        } else {
+            $formErrors['passwordInvalid'] = true;
+        }
+
+
+        $vPassword = v::alnum()->noWhitespace()->length(3, 32);
+        if (!$vPassword->validate($formParams['password'])) {
+            $formErrors['passwordInvalid'] = true;
+        }
+
+
+        // check for user in DB
+        if ((!$formErrors['emailInvalid']) && (!$formErrors['passwordInvalid'])) {
+            $users = dbExecute($dbh, 'SELECT * FROM users WHERE email=:email', [':email' => $formParams['email']]);
+            if (count($users) === 0) {
+                $formErrors['userAbsent'] = true;
+
+            }
+
+            // Checking for password
+            if (!$formErrors['userAbsent']) {
+                if (!password_verify($formParams['password'], $users[0]['password'])) {
+                    $formErrors['passwordWrong'] = true;
+                }
+            }
+
+            // User session creation
+            if (!$formErrors['userAbsent'] && !$formErrors['passwordWrong']) {
+                $formState = FORM_STATE_SUCCESS;
+                session_start();
+                $_SESSION['username'] = $users[0]['username'];
+                $_SESSION['user_id'] = $users[0]['user_id'];
+                echo 'redirect to dashboard';
+                //header("Location: /index.php");
+            }
+        }
+        if ($formErrors['emailInvalid'] || $formErrors['passwordInvalid'] || $formErrors['userAbsent'] || $formErrors['passwordWrong']) {
+            $formState = FORM_STATE_ERRORS;
         }
     }
 }
-
-echo 'isUserVerified=';
-var_dump($isUserVerified);
-echo '</pre>';
 
 
 echo $twig->render('login.html.twig',
     [
         'pageTitle' => 'Login',
-        'isEmail' => $isEmail,
-        'pEmail' => $pEmail,
-        'isPassword' => $isPassword,
-        'pPassword' => $pPassword
+        'formParams' => $formParams,
+        'formErrors' => $formErrors,
+        'formState' => $formState
     ]);
 
 

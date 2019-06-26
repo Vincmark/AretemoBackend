@@ -1,17 +1,29 @@
 {% extends "template.html.twig" %}
 
+
+
 {% block content %}
+    {{ formState }}
+    <p>Email = {{ formParams['email'] }}</p>
+    <p>Password = {{ formParams['password'] }}</p>
+    <p>{%  if formErrors['emailInvalid'] %} Email Invalid {% endif %}</p>
+    <p>{%  if formErrors['passwordInvalid'] %} Password Invalid {% endif %}</p>
+
 <form action="login" method="post">
     <label for="user_name">User email</label>
-    <input type="text" name="email" {{ isEmail ? '' :  'value='~pEmail~'' }}>
-    {% if not isEmail %}
+    <input type="text" name="email" {{ (formState == 2) and (formErrors['emailInvalid']) ? 'value='~formParams['email']|escape~'' : '' }}>
+    {% if (formState == 2 and formErrors['emailInvalid']) %}
         <p> Email is wrong</p>
     {% endif %}
     <label for="user_name">Password</label>
-    <input type="password" name="password" {{ isPassword ? '' :  'value='~pPassword~'' }}>
-    {% if not isPassword %}
+    <input type="password" name="password" {{ (formState == 2 and formErrors['passwordInvalid']) ? 'value='~formParams['password']|escape~'' : '' }}>
+    {% if (formState == 2 and formErrors['passwordInvalid']) %}
         <p> Password is wrong</p>
     {% endif %}
+    {% if formState == 2 and formErrors['userAbsent'] == true or formErrors['passwordWrong'] == true  %}
+        <p> Life is pain )</p>
+    {% endif %}
+
     <button type="submit">Login</button>
 </form>
 {% endblock %}
