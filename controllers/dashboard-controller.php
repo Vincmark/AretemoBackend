@@ -1,6 +1,11 @@
 <?php
 
-echo "Dashboard";
+if (!$isAuth) {
+    //http_response_code(403);
+    header("Location: /login");
+}
 
-
-echo $twig->render('dashboard.html.twig', ['pageTitle' => 'Error 404']);
+echo $twig->render('page--dashboard.twig',
+    [
+        'pageTitle' => 'Dashboard',
+    ]);

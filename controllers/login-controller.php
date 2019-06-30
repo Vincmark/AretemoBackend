@@ -32,9 +32,9 @@ if ($isAuth) {
 
 if (($formOut !== 1) && ($formIn === 1)) {
     $formOut = 2;
-    echo 'clear';
+    //echo 'clear';
 } elseif (($formOut !== 1) && ($formIn === 2)) {
-    echo 'post';
+    //echo 'post';
     //email
     if (isset($_POST['email'])) {
         $formParams['email'] = $_POST['email'];
@@ -88,19 +88,19 @@ if (($formOut !== 1) && ($formIn === 1)) {
     }
 }
 
-echo '<pre>';
-echo 'FormIn = '.$formIn;
-echo '<br>';
-echo 'FormOut = '.$formOut;
-echo '<br>';
-echo 'isPost = '.$isPost;
-var_dump($isPost);
-echo '<br>';
-echo 'isAuth = '.$isAuth;
-var_dump($isAuth);
-echo '<br>';
-echo '<br>';
-echo '</pre>';
+//echo '<pre>';
+//echo 'FormIn = '.$formIn;
+//echo '<br>';
+//echo 'FormOut = '.$formOut;
+//echo '<br>';
+//echo 'isPost = '.$isPost;
+//var_dump($isPost);
+//echo '<br>';
+//echo 'isAuth = '.$isAuth;
+//var_dump($isAuth);
+//echo '<br>';
+//echo '<br>';
+//echo '</pre>';
 
 if ($formOut === 1) {
     // auth redirect
@@ -108,9 +108,10 @@ if ($formOut === 1) {
     header("Location: /dashboard");
 } elseif (($formOut === 2) || ($formOut === 3)) {
     // show form
-    echo $twig->render('login.html.twig',
+    echo $twig->render('page--login.twig',
         [
             'pageTitle' => 'Login',
+            'menuList' => $menuList,
             'formParams' => $formParams,
             'formErrors' => $formErrors,
             'formOut' => $formOut
