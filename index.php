@@ -49,8 +49,8 @@ if (($uriParts[0] === '') && (count($uriParts) === 1)) {
     $controller = 'dashboard-controller.php';
 } elseif (($uriParts[0] === 'profile') && (count($uriParts) === 1)) {
     $controller = 'profile-controller.php';
-} elseif (($uriParts[0] === 'portfolio') && (count($uriParts) === 2)) {
-    $controller = 'portfolio-controller.php';
+} elseif (($uriParts[0] === 'logout') && (count($uriParts) === 1)) {
+    $controller = 'logout-controller.php';
 } else {
     $controller = '404-controller.php';
 }

@@ -2,6 +2,12 @@
 
 use Respect\Validation\Validator as v;
 
+//echo password_hash('23456',PASSWORD_DEFAULT);
+
+
+$formIn = 0; // 0 - not set;  1 - clear form; 2 - checking for credentials
+$formOut = 0; // 0 - not set; 1 - authorized and redirect; 2 - send credentials to itself; 3 - credentials error; 4 - credentials good and redirect
+
 $formParams['email'] = '';
 $formParams['password'] = '';
 
@@ -10,107 +16,116 @@ $formErrors['passwordInvalid'] = false;
 $formErrors['userAbsent'] = false;
 $formErrors['passwordWrong'] = false;
 
-define("FORM_STATE_AUTHORIZED", 0);
-define("FORM_STATE_CLEAR", 1);
-define("FORM_STATE_ERRORS", 2);
-define("FORM_STATE_SUCCESS", 3);
-
-$formState = -1;
-
 $isPost = false;
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $isPost = true;
 }
 
-//echo 'Auth=';
-//var_dump($isAuth);
-//echo 'Post=';
-//var_dump($isPost);
-
-
-// Checking for case
-// Case - 0. We are authorized - redirect to default controller
-// - authorized
-if ($isAuth) {
-    $formState = FORM_STATE_AUTHORIZED;
+$formIn = 1;
+if ($isPost) {
+    $formIn = 2;
 }
 
-// Case - 1. We are loading clear login page - show clear login page
-// - not authorized
-// - no POST data
-if ((!$isAuth) && (!$isPost)) {
-    $formState = FORM_STATE_CLEAR;
-} else {
-    if ((!$isAuth) && ($isPost)) {
+if ($isAuth) {
+    $formOut = 1;
+}
 
-        //email
-        if (isset($_POST['email'])) {
-            $formParams['email'] = $_POST['email'];
-        } else {
+if (($formOut !== 1) && ($formIn === 1)) {
+    $formOut = 2;
+    echo 'clear';
+} elseif (($formOut !== 1) && ($formIn === 2)) {
+    echo 'post';
+    //email
+    if (isset($_POST['email'])) {
+        $formParams['email'] = $_POST['email'];
+    } else {
+        $formErrors['emailInvalid'] = true;
+    }
+
+    if (!$formErrors['emailInvalid']) {
+        $formParams['email'] = trim($formParams['email']);
+        $vEmail = v::email();
+        if (!$vEmail->validate($formParams['email'])) {
+            echo 'Invalid Email';
             $formErrors['emailInvalid'] = true;
         }
+    }
 
-        if (!$formErrors['emailInvalid']) {
-            $formParams['email'] = trim($formParams['email']);
-            $vEmail = v::email();
-            if (!$vEmail->validate($formParams['email'])) {
-                echo 'Invalid Email';
-                $formErrors['emailInvalid'] = true;
-            }
-        }
+    // password
+    if (isset($_POST['password'])) {
+        $formParams['password'] = $_POST['password'];
+    } else {
+        $formErrors['passwordInvalid'] = true;
+    }
 
-        // password
-        if (isset($_POST['password'])) {
-            $formParams['password'] = $_POST['password'];
+
+    $vPassword = v::alnum()->noWhitespace()->length(3, 32);
+    if (!$vPassword->validate($formParams['password'])) {
+        $formErrors['passwordInvalid'] = true;
+    }
+
+    // check for user in DB
+    if ((!$formErrors['emailInvalid']) && (!$formErrors['passwordInvalid'])) {
+        $users = dbExecute($dbh, 'SELECT * FROM users WHERE email=:email', [':email' => $formParams['email']]);
+        if (count($users) === 0) {
+            $formErrors['userAbsent'] = true;
         } else {
-            $formErrors['passwordInvalid'] = true;
+            echo 'user found';
         }
 
-
-        $vPassword = v::alnum()->noWhitespace()->length(3, 32);
-        if (!$vPassword->validate($formParams['password'])) {
-            $formErrors['passwordInvalid'] = true;
-        }
-
-
-        // check for user in DB
-        if ((!$formErrors['emailInvalid']) && (!$formErrors['passwordInvalid'])) {
-            $users = dbExecute($dbh, 'SELECT * FROM users WHERE email=:email', [':email' => $formParams['email']]);
-            if (count($users) === 0) {
-                $formErrors['userAbsent'] = true;
-
-            }
-
-            // Checking for password
-            if (!$formErrors['userAbsent']) {
-                if (!password_verify($formParams['password'], $users[0]['password'])) {
-                    $formErrors['passwordWrong'] = true;
-                }
-            }
-
-            // User session creation
-            if (!$formErrors['userAbsent'] && !$formErrors['passwordWrong']) {
-                $formState = FORM_STATE_SUCCESS;
-                session_start();
-                $_SESSION['username'] = $users[0]['username'];
-                $_SESSION['user_id'] = $users[0]['user_id'];
-                echo 'redirect to dashboard';
-                //header("Location: /index.php");
+        // Checking for password
+        if (!$formErrors['userAbsent']) {
+            if (!password_verify($formParams['password'], $users[0]['password'])) {
+                $formErrors['passwordWrong'] = true;
+            } else {
+                $formOut = 4;
             }
         }
-        if ($formErrors['emailInvalid'] || $formErrors['passwordInvalid'] || $formErrors['userAbsent'] || $formErrors['passwordWrong']) {
-            $formState = FORM_STATE_ERRORS;
-        }
+    }
+
+    if ($formErrors['emailInvalid'] || $formErrors['passwordInvalid'] || $formErrors['userAbsent'] || $formErrors['passwordWrong']) {
+        $formOut = 3;
     }
 }
 
+echo '<pre>';
+echo 'FormIn = '.$formIn;
+echo '<br>';
+echo 'FormOut = '.$formOut;
+echo '<br>';
+echo 'isPost = '.$isPost;
+var_dump($isPost);
+echo '<br>';
+echo 'isAuth = '.$isAuth;
+var_dump($isAuth);
+echo '<br>';
+echo '<br>';
+echo '</pre>';
 
-echo $twig->render('login.html.twig',
-    [
-        'pageTitle' => 'Login',
-        'formParams' => $formParams,
-        'formErrors' => $formErrors,
-        'formState' => $formState
-    ]);
+if ($formOut === 1) {
+    // auth redirect
+    echo 'Authorized. Redirect to dashboard';
+    header("Location: /dashboard");
+} elseif (($formOut === 2) || ($formOut === 3)) {
+    // show form
+    echo $twig->render('login.html.twig',
+        [
+            'pageTitle' => 'Login',
+            'formParams' => $formParams,
+            'formErrors' => $formErrors,
+            'formOut' => $formOut
+        ]);
+
+} elseif ($formOut === 4) {
+    // success redirect
+    //session_start();
+    $_SESSION['username'] = $users[0]['name'];
+    $_SESSION['user_id'] = $users[0]['id'];
+    echo 'Success login. Redirect to dashboard';
+    header("Location: /dashboard");
+}
+
+
+
 
 
