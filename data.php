@@ -39,11 +39,11 @@ $menuList = [
         'icon' => ''
     ],
     [
-        // Users
+        // Admins
         'id' => '1',
         'type' => 'item',
-        'title' => 'Users',
-        'uri' => 'users',
+        'title' => 'Admins',
+        'uri' => 'admins',
         'icon' => ''
     ],
     [
@@ -67,4 +67,113 @@ $menuList = [
         'uri' => 'profile',
         'icon' => ''
     ]
+];
+
+$pages = [
+    [
+        // login
+        'id' => '1',
+        'uri' => 'login',
+        'title' => 'Login',
+        'h1' => 'Login',
+        'description' => 'Login',
+        'breadCrambs' => [
+            [
+                'title' => '',
+                'link' => ''
+            ],
+            [
+                'title' => '',
+                'link' => ''
+            ],
+            [
+                'title' => '',
+                'link' => ''
+            ]
+        ]
+
+    ],
+    [
+        // dashboard
+        'id' => '2',
+        'uri' => 'dashboard',
+        'title' => 'Dashboard',
+        'h1' => 'Dashboard',
+        'description' => 'Dashboard',
+        'breadCrambs' => [
+            [
+                'title' => 'Dashboard',
+                'link' => ''
+            ]
+        ]
+    ],
+    [
+        // users
+        'id' => '3',
+        'uri' => 'admins',
+        'title' => 'Admins',
+        'h1' => 'Admins',
+        'description' => 'Admins',
+        'breadCrambs' => [
+            [
+                'title' => 'Amins',
+                'link' => ''
+            ]
+        ]
+    ],
+    [
+        // user
+        'id' => '4',
+        'uri' => 'admin',
+        'title' => 'Admin',
+        'h1' => 'Admin',
+        'description' => 'Admin',
+        'breadCrambs' => [
+            [
+                'title' => 'Admins',
+                'link' => ''
+            ],
+            [
+                'title' => 'Admin',
+                'link' => ''
+            ]
+        ]
+    ],
+    [
+        // profile
+        'id' => '5',
+        'uri' => 'profile',
+        'title' => 'Profile',
+        'h1' => 'Profile',
+        'description' => 'Profile',
+        'breadCrambs' => [
+            [
+                'title' => 'Profile',
+                'link' => ''
+            ],
+        ]
+    ],
+    [
+        // dictionaries
+        'id' => '6',
+        'uri' => 'dictionaries',
+        'title' => 'Dictionaries',
+        'h1' => 'Dictionaries',
+        'description' => 'Dictionaries',
+        'breadCrambs' => [
+            [
+                'title' => 'Dictionaries',
+                'link' => ''
+            ],
+        ]
+    ],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    []
 ];
